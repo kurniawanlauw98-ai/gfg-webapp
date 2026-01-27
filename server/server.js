@@ -22,7 +22,9 @@ app.use(async (req, res, next) => {
             console.error('Database connection error:', err);
             return res.status(500).json({
                 message: 'Database connection failed',
-                error: err.message
+                error: err.message,
+                stack: err.stack,
+                uriUsed: process.env.MONGO_URI ? (process.env.MONGO_URI.substring(0, 30) + '...') : 'NULL/MISSING'
             });
         }
     } else {
