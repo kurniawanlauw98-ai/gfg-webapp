@@ -8,9 +8,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to Database
-connectDB();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -27,18 +24,18 @@ app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/daily', require('./routes/dailyRoutes'));
 app.use('/api/submissions', require('./routes/submissionRoutes'));
 
-// Cron Job for Daily Updates (e.g., reset daily data if needed or fetch verse)
-const cron = require('node-cron');
-const { getDailyVerse } = require('./controllers/dailyController'); // We might expose a helper or just rely on lazy fetch
-// Running at midnight (00:00) Jakarta time (if server is UTC, adjust accordingly)
-// For now, let's just log it. Real Verse is fetched lazily on first request of the day in logic above.
-cron.schedule('0 0 * * *', () => {
-    console.log('Running daily maintenance tasks...');
-    // Could trigger verse fetch here to cache it
-});
-
-// Socket.io Setup (Only for Local/Stateful server)
+// Development Mode: Socket.io, Cron, and Server Listening
 if (process.env.NODE_ENV !== 'production') {
+    // Connect to Database
+    connectDB();
+
+    // Cron Job for Daily Updates
+    const cron = require('node-cron');
+    cron.schedule('0 0 * * *', () => {
+        console.log('Running daily maintenance tasks...');
+    });
+
+    // Start server with Socket.io
     const server = app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
@@ -67,7 +64,12 @@ if (process.env.NODE_ENV !== 'production') {
         });
     });
 } else {
-    // For Vercel Serverless
-    module.exports = app;
+    // Production Mode (Vercel Serverless): Connect DB on cold starts
+    connectDB().catch(err => {
+        console.error('MongoDB connection failed:', err);
+    });
 }
+
+// Export app for Vercel Serverless
+module.exports = app;
 
