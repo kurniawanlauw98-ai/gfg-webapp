@@ -13,10 +13,22 @@ app.use(cors());
 app.use(express.json());
 
 // Diagnostic Route (Bypasses DB middleware)
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    let dbStatus = 'disconnected';
+    let dbError = null;
+
+    try {
+        await connectDB();
+        dbStatus = 'connected';
+    } catch (err) {
+        dbStatus = 'failed';
+        dbError = err.message;
+    }
+
     res.json({
         status: 'online',
-        message: 'Backend is up, checking environment...',
+        database: dbStatus,
+        error: dbError,
         env: {
             node_env: process.env.NODE_ENV,
             mongo_uri_exists: !!process.env.MONGO_URI,

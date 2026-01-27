@@ -1,18 +1,21 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            // These options are no longer necessary in Mongoose 6+, but keeping for compatibility if older version is used, 
-            // though we installed latest. We can omit them for cleanliness or keep to be safe.
-            // useNewUrlParser: true,
-            // useUnifiedTopology: true,
-        });
+// Connection cache
+let isConnected = false;
 
+const connectDB = async () => {
+    if (isConnected) {
+        return;
+    }
+
+    try {
+        const conn = await mongoose.connect(process.env.MONGO_URI);
+        isConnected = true;
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(`Error: ${error.message}`);
-        throw error; // Throw so the middleware can catch it
+        isConnected = false;
+        throw error;
     }
 };
 
