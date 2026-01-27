@@ -12,6 +12,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Diagnostic Route (Bypasses DB middleware)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'online',
+        message: 'Backend is up, checking environment...',
+        env: {
+            node_env: process.env.NODE_ENV,
+            mongo_uri_exists: !!process.env.MONGO_URI,
+            mongo_uri_prefix: process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) : 'none'
+        }
+    });
+});
+
 // Production Mode (Vercel Serverless): Ensure DB connection on every request
 app.use(async (req, res, next) => {
     if (process.env.NODE_ENV === 'production') {
