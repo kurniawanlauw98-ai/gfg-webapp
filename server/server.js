@@ -37,32 +37,37 @@ cron.schedule('0 0 * * *', () => {
     // Could trigger verse fetch here to cache it
 });
 
-const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-// Socket.io Setup
-const io = require('socket.io')(server, {
-    cors: {
-        origin: "*", // Allow all for dev
-        methods: ["GET", "POST"]
-    }
-});
-
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
-
-    socket.on('join_room', (room) => {
-        socket.join(room);
-        console.log(`User joined room: ${room}`);
+// Socket.io Setup (Only for Local/Stateful server)
+if (process.env.NODE_ENV !== 'production') {
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
     });
 
-    socket.on('send_message', (data) => {
-        // data: { room, author, message, time }
-        io.to(data.room).emit('receive_message', data);
+    const io = require('socket.io')(server, {
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST"]
+        }
     });
 
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
+    io.on('connection', (socket) => {
+        console.log('New client connected:', socket.id);
+
+        socket.on('join_room', (room) => {
+            socket.join(room);
+            console.log(`User joined room: ${room}`);
+        });
+
+        socket.on('send_message', (data) => {
+            io.to(data.room).emit('receive_message', data);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Client disconnected');
+        });
     });
-});
+} else {
+    // For Vercel Serverless
+    module.exports = app;
+}
+
