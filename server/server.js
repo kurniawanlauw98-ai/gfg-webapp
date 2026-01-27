@@ -12,6 +12,24 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Production Mode (Vercel Serverless): Ensure DB connection on every request
+app.use(async (req, res, next) => {
+    if (process.env.NODE_ENV === 'production') {
+        try {
+            await connectDB();
+            next();
+        } catch (err) {
+            console.error('Database connection error:', err);
+            return res.status(500).json({
+                message: 'Database connection failed',
+                error: err.message
+            });
+        }
+    } else {
+        next();
+    }
+});
+
 // Basic Route
 app.get('/', (req, res) => {
     res.send('GFG Generation for God API is running');
@@ -65,16 +83,7 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Production Mode (Vercel Serverless): Ensure DB connection on every request
-app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (err) {
-        console.error('Database connection error:', err);
-        res.status(500).json({ message: 'Database connection failed', error: err.message });
-    }
-});
+// Development Mode: Socket.io, Cron, and Server Listening
 
 // Export app for Vercel Serverless
 module.exports = app;
