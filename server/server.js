@@ -63,13 +63,17 @@ if (process.env.NODE_ENV !== 'production') {
             console.log('Client disconnected');
         });
     });
-} else {
-    // Production Mode (Vercel Serverless): Connect DB on cold starts
-    connectDB().catch(err => {
-        console.error('MongoDB connection failed:', err);
+    // Production Mode (Vercel Serverless): Ensure DB connection on every request
+    app.use(async (req, res, next) => {
+        try {
+            await connectDB();
+            next();
+        } catch (err) {
+            console.error('Database connection error:', err);
+            res.status(500).json({ message: 'Database connection failed', error: err.message });
+        }
     });
-}
 
-// Export app for Vercel Serverless
-module.exports = app;
+    // Export app for Vercel Serverless
+    module.exports = app;
 
