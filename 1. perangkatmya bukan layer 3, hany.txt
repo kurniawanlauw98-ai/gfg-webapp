@@ -1,0 +1,6 @@
+1. perangkatmya bukan layer 3, hanya bisa meloloskan 1 vlan aja.
+2. di metro setingan nya acces yang bisa rubah hanya tim metro, user sudah bisa internet 
+sto ciampel sudah bisa akses internet hanya ganti IP dari 10.51.254.150 ke 10.51.22.2
+------------------------------------------------------------------------------------------
+akses telnet sto ciampel 10.51.22.3
+ 

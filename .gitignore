@@ -1,0 +1,15 @@
+# Large binaries
+*.exe
+*.msi
+*.zip
+*.vsix
+
+# Tools and System
+.vscode
+.snapshots
+Lightshot
+Zoom
+WindowsPowerShell
+
+# Dependencies
+node_modules
