@@ -14,64 +14,72 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { name, email, password, referralCode } = req.body;
+    try {
+        const { name, email, password, referralCode } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: 'Please add all fields' });
-    }
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-        return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Generate own referral code (simple random string)
-    const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Check for referrer
-    let referrerId = null;
-    if (referralCode) {
-        const referrer = await User.findOne({ referralCode });
-        if (referrer) {
-            referrerId = referrer._id;
-            // Add points to referrer (+200)
-            referrer.points += 200;
-            await referrer.save();
-            // Create transaction record for referrer
-            await Transaction.create({
-                user: referrerId,
-                amount: 200,
-                type: 'referral',
-                description: `Referral bonus for inviting ${name}`
-            });
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: 'Please add all fields' });
         }
-    }
 
-    // Create user
-    const user = await User.create({
-        name,
-        email,
-        password: hashedPassword,
-        referralCode: newReferralCode,
-        referredBy: referrerId
-    });
+        // Check if user exists
+        const userExists = await User.findOne({ email });
 
-    if (user) {
-        res.status(201).json({
-            _id: user.id,
-            name: user.name,
-            email: user.email,
-            token: generateToken(user._id),
-            role: user.role
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Generate own referral code (simple random string)
+        const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        // Check for referrer
+        let referrerId = null;
+        if (referralCode) {
+            const referrer = await User.findOne({ referralCode });
+            if (referrer) {
+                referrerId = referrer._id;
+                // Add points to referrer (+200)
+                referrer.points += 200;
+                await referrer.save();
+                // Create transaction record for referrer
+                await Transaction.create({
+                    user: referrerId,
+                    amount: 200,
+                    type: 'referral',
+                    description: `Referral bonus for inviting ${name}`
+                });
+            }
+        }
+
+        // Create user
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            referralCode: newReferralCode,
+            referredBy: referrerId
         });
-    } else {
-        res.status(400).json({ message: 'Invalid user data' });
+
+        if (user) {
+            res.status(201).json({
+                _id: user.id,
+                name: user.name,
+                email: user.email,
+                token: generateToken(user._id),
+                role: user.role
+            });
+        } else {
+            res.status(400).json({ message: 'Invalid user data' });
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({
+            message: 'Server error during registration',
+            error: error.message
+        });
     }
 };
 
