@@ -46,7 +46,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
-// app.use('/api/daily', require('./routes/dailyRoutes'));
+app.use('/api/daily', require('./routes/dailyRoutes'));
 app.use('/api/submissions', require('./routes/submissionRoutes'));
 
 // Basic Route
