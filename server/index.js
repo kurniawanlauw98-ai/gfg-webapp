@@ -29,6 +29,9 @@ app.get('/api/health', (req, res) => {
         env: {
             node_env: process.env.NODE_ENV,
             sheets_id_exists: !!process.env.GOOGLE_SHEETS_ID,
+            sheets_email_exists: !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+            sheets_key_exists: !!process.env.GOOGLE_PRIVATE_KEY,
+            jwt_secret_exists: !!process.env.JWT_SECRET,
             mongo_uri_exists: !!process.env.MONGO_URI
         }
     });
