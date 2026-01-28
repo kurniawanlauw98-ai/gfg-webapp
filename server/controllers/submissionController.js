@@ -1,5 +1,6 @@
 const Submission = require('../models/Submission');
 const User = require('../models/User');
+const { syncToSheet } = require('../config/googleSheets');
 
 // @desc    Create a new submission
 // @route   POST /api/submissions
@@ -29,6 +30,21 @@ const createSubmission = async (req, res) => {
             totalPoints: user.points,
             submission
         });
+
+        // Sync to Google Sheets
+        try {
+            await syncToSheet('Submissions', [{
+                ID: submission._id.toString(),
+                User: user.name,
+                Email: user.email,
+                Type: type,
+                Content: content,
+                Date: submission.createdAt.toISOString()
+            }]);
+        } catch (sheetError) {
+            console.error('Failed to sync to Google Sheets:', sheetError);
+            // We don't want to fail the whole request if sheet sync fails
+        }
 
     } catch (error) {
         res.status(500).json({ message: error.message });

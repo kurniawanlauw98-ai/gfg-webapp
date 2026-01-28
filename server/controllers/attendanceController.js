@@ -1,5 +1,6 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
+const { syncToSheet } = require('../config/googleSheets');
 
 // @desc    Mark attendance (Scan QR)
 // @route   POST /api/attendance
@@ -40,6 +41,18 @@ const markAttendance = async (req, res) => {
             pointsAdded: 10,
             totalPoints: user.points
         });
+
+        // Sync to Google Sheets
+        try {
+            await syncToSheet('Attendance', [{
+                User: user.name,
+                Email: user.email,
+                Date: attendance.date.toLocaleString(),
+                Method: attendance.method
+            }]);
+        } catch (sheetError) {
+            console.error('Failed to sync attendance to Google Sheets:', sheetError);
+        }
 
     } catch (error) {
         res.status(500).json({ message: error.message });
