@@ -132,9 +132,27 @@ const getLeaderboard = async (req, res) => {
     }
 };
 
+// @desc    Upgrade user to admin
+// @route   PUT /api/auth/role
+// @access  Private (Admin Only)
+const upgradeToAdmin = async (req, res) => {
+    try {
+        const { email, role } = req.body;
+        const success = await require('../config/googleSheets').updateUserRole(email, role);
+        if (success) {
+            res.status(200).json({ message: `User ${email} updated to ${role}` });
+        } else {
+            res.status(404).json({ message: 'User not found in Sheet' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
-    getLeaderboard
+    getLeaderboard,
+    upgradeToAdmin
 };

@@ -73,7 +73,7 @@ const updateUserPoints = async (email, pointsToAdd) => {
         const sheet = document.sheetsByTitle['Users'];
         if (!sheet) return;
         const rows = await sheet.getRows();
-        const row = rows.find(r => r.Email === email);
+        const row = rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
         if (row) {
             row.Points = (parseInt(row.Points) || 0) + pointsToAdd;
             await row.save();
@@ -83,4 +83,50 @@ const updateUserPoints = async (email, pointsToAdd) => {
     }
 };
 
-module.exports = { syncToSheet, getRows, updateUserPoints };
+/**
+ * Update a user's role in the sheet
+ */
+const updateUserRole = async (email, newRole) => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        const sheet = document.sheetsByTitle['Users'];
+        if (!sheet) return false;
+        const rows = await sheet.getRows();
+        const row = rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
+        if (row) {
+            row.Role = newRole;
+            await row.save();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error(`Error updating role in Google Sheets:`, error);
+        return false;
+    }
+};
+
+/**
+ * Generic Update row by ID
+ */
+const updateSheetRow = async (title, id, updatedData) => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        const sheet = document.sheetsByTitle[title];
+        if (!sheet) return false;
+        const rows = await sheet.getRows();
+        const row = rows.find(r => r.ID === id);
+        if (row) {
+            Object.assign(row, updatedData);
+            await row.save();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error(`Error updating row in Google Sheets (${title}):`, error);
+        return false;
+    }
+};
+
+module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow };
