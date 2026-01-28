@@ -1,15 +1,7 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const { JWT } = require('google-auth-library');
 require('dotenv').config();
 
-// Initialize auth
-const serviceAccountAuth = new JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY.replace(/^"/, '').replace(/"$/, '').replace(/\\n/g, '\n'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
-
-const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID, serviceAccountAuth);
+const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID);
 
 /**
  * Sync data to a specific sheet
@@ -18,6 +10,12 @@ const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID, serviceAccountAu
  */
 const syncToSheet = async (title, data) => {
     try {
+        // Authenticate using Service Account in v3 syntax
+        await doc.useServiceAccountAuth({
+            client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+            private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n').replace(/"/g, ''),
+        });
+
         await doc.loadInfo();
         let sheet = doc.sheetsByTitle[title];
 
@@ -31,7 +29,7 @@ const syncToSheet = async (title, data) => {
         console.log(`Successfully synced ${data.length} rows to sheet: ${title}`);
     } catch (error) {
         console.error(`Error syncing to Google Sheets (${title}):`, error);
-        throw error;
+        // Don't throw if it's just a sync failure to prevent server crash
     }
 };
 
