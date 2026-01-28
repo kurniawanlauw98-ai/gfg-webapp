@@ -4,6 +4,10 @@ require('dotenv').config();
 const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID);
 
 const initDoc = async () => {
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_ID) {
+        throw new Error('Missing Google Sheets Environment Variables (EMAIL, PRIVATE_KEY, or ID)');
+    }
+
     await doc.useServiceAccountAuth({
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n').replace(/"/g, ''),
