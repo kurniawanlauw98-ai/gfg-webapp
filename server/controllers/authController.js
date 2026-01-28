@@ -1,5 +1,4 @@
-const User = require('../models/User');
-const Transaction = require('../models/Transaction'); // Import Transaction
+const { syncToSheet, getRows } = require('../config/googleSheets');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -8,6 +7,14 @@ const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
     });
+};
+
+/**
+ * Helper to find user in sheet by Email
+ */
+const findUserInSheet = async (email) => {
+    const rows = await getRows('Users');
+    return rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
 };
 
 // @desc    Register new user
@@ -21,9 +28,8 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'Please add all fields' });
         }
 
-        // Check if user exists
-        const userExists = await User.findOne({ email });
-
+        // Check if user exists in Sheet
+        const userExists = await findUserInSheet(email);
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
@@ -32,54 +38,31 @@ const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Generate own referral code (simple random string)
         const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        // Check for referrer
-        let referrerId = null;
-        if (referralCode) {
-            const referrer = await User.findOne({ referralCode });
-            if (referrer) {
-                referrerId = referrer._id;
-                // Add points to referrer (+200)
-                referrer.points += 200;
-                await referrer.save();
-                // Create transaction record for referrer
-                await Transaction.create({
-                    user: referrerId,
-                    amount: 200,
-                    type: 'referral',
-                    description: `Referral bonus for inviting ${name}`
-                });
-            }
-        }
+        const newUser = {
+            ID: Date.now().toString(),
+            Name: name,
+            Email: email,
+            Password: hashedPassword,
+            Role: 'user',
+            Points: '0',
+            ReferralCode: newReferralCode,
+            CreatedAt: new Date().toLocaleString()
+        };
 
-        // Create user
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            referralCode: newReferralCode,
-            referredBy: referrerId
+        await syncToSheet('Users', [newUser]);
+
+        res.status(201).json({
+            _id: newUser.ID,
+            name: newUser.Name,
+            email: newUser.Email,
+            token: generateToken(newUser.ID),
+            role: newUser.Role
         });
-
-        if (user) {
-            res.status(201).json({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                token: generateToken(user._id),
-                role: user.role
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({
-            message: 'Server error during registration',
-            error: error.message
-        });
+        res.status(500).json({ message: 'Server error during registration' });
     }
 };
 
@@ -90,26 +73,33 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check for user email
-        const user = await User.findOne({ email });
+        // Special Admin Login (Bypasses Sheet for emergency)
+        if (email === 'admingfg@gfg.org' && password === 'gracetoyou') {
+            return res.json({
+                _id: 'ADMIN_001',
+                name: 'Super Admin',
+                email: 'admingfg@gfg.org',
+                token: generateToken('ADMIN_001'),
+                role: 'admin'
+            });
+        }
 
-        if (user && (await bcrypt.compare(password, user.password))) {
+        const userRow = await findUserInSheet(email);
+
+        if (userRow && (await bcrypt.compare(password, userRow.Password))) {
             res.json({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                token: generateToken(user._id),
-                role: user.role
+                _id: userRow.ID,
+                name: userRow.Name,
+                email: userRow.Email,
+                token: generateToken(userRow.ID),
+                role: userRow.Role || 'user'
             });
         } else {
             res.status(400).json({ message: 'Invalid credentials' });
         }
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({
-            message: 'Server error during login',
-            error: error.message
-        });
+        res.status(500).json({ message: 'Server error during login' });
     }
 };
 
@@ -117,7 +107,6 @@ const loginUser = async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = async (req, res) => {
-    // req.user is set by authMiddleware
     res.status(200).json(req.user);
 };
 
@@ -126,10 +115,16 @@ const getMe = async (req, res) => {
 // @access  Public
 const getLeaderboard = async (req, res) => {
     try {
-        const users = await User.find({ role: 'user' }) // Filter admin out if needed, or include all
-            .sort({ points: -1 })
-            .limit(10)
-            .select('name points avatar');
+        const rows = await getRows('Users');
+        const users = rows
+            .filter(r => r.Role !== 'admin')
+            .map(r => ({
+                name: r.Name,
+                points: parseInt(r.Points) || 0,
+                avatar: r.Avatar || ''
+            }))
+            .sort((a, b) => b.points - a.points)
+            .slice(0, 10);
 
         res.status(200).json(users);
     } catch (error) {

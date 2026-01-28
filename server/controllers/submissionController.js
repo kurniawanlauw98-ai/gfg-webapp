@@ -1,6 +1,4 @@
-const Submission = require('../models/Submission');
-const User = require('../models/User');
-const { syncToSheet } = require('../config/googleSheets');
+const { syncToSheet, getRows, updateUserPoints } = require('../config/googleSheets');
 
 // @desc    Create a new submission
 // @route   POST /api/submissions
@@ -13,40 +11,33 @@ const createSubmission = async (req, res) => {
     }
 
     try {
-        const submission = await Submission.create({
-            user: req.user.id,
-            type,
-            content
-        });
+        const submissionId = Date.now().toString();
+        const dateString = new Date().toLocaleString();
+
+        const submission = {
+            ID: submissionId,
+            User: req.user.name,
+            Email: req.user.email,
+            Type: type,
+            Content: content,
+            Date: dateString
+        };
 
         // Add points for submission
-        const user = await User.findById(req.user.id);
-        user.points += 15;
-        await user.save();
+        await updateUserPoints(req.user.email, 15);
+
+        // Sync to Google Sheets
+        await syncToSheet('Submissions', [submission]);
 
         res.status(201).json({
             message: 'Submission successful',
             pointsAdded: 15,
-            totalPoints: user.points,
+            totalPoints: (req.user.points || 0) + 15,
             submission
         });
 
-        // Sync to Google Sheets
-        try {
-            await syncToSheet('Submissions', [{
-                ID: submission._id.toString(),
-                User: user.name,
-                Email: user.email,
-                Type: type,
-                Content: content,
-                Date: submission.createdAt.toISOString()
-            }]);
-        } catch (sheetError) {
-            console.error('Failed to sync to Google Sheets:', sheetError);
-            // We don't want to fail the whole request if sheet sync fails
-        }
-
     } catch (error) {
+        console.error('Submission Error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -56,7 +47,18 @@ const createSubmission = async (req, res) => {
 // @access  Private/Admin
 const getSubmissions = async (req, res) => {
     try {
-        const submissions = await Submission.find().populate('user', 'name email').sort({ createdAt: -1 });
+        const rows = await getRows('Submissions');
+        const submissions = rows.map(r => ({
+            _id: r.ID,
+            type: r.Type,
+            content: r.Content,
+            createdAt: r.Date,
+            user: {
+                name: r.User,
+                email: r.Email
+            }
+        })).reverse();
+
         res.status(200).json(submissions);
     } catch (error) {
         res.status(500).json({ message: error.message });

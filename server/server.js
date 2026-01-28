@@ -28,69 +28,34 @@ app.get('/api/health', async (req, res) => {
     res.json({
         status: 'online',
         database: dbStatus,
+        mode: 'Google Sheets DB (Standard)',
         error: dbError,
         env: {
             node_env: process.env.NODE_ENV,
             mongo_uri_exists: !!process.env.MONGO_URI,
-            mongo_uri_prefix: process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) : 'none'
+            sheets_id_exists: !!process.env.GOOGLE_SHEETS_ID
         }
     });
 });
 
-// Emergency Seed Route (Admin only)
+// Emergency Seed Route - Disabled or converted? 
+// We'll keep it but it's less relevant now as Admin bypass is in authController.
 app.get('/api/seed-admin', async (req, res) => {
-    try {
-        await connectDB();
-        const User = require('./models/User');
-        const bcrypt = require('bcryptjs');
-
-        const adminEmail = 'admingfg@gfg.org';
-        const adminExists = await User.findOne({ email: adminEmail });
-
-        if (!adminExists) {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash('gracetoyou', salt);
-
-            await User.create({
-                name: 'Super Admin',
-                email: adminEmail,
-                password: hashedPassword,
-                role: 'admin',
-                referralCode: 'ADMIN1',
-                isVerified: true
-            });
-            return res.json({ message: 'Admin account created successfully' });
-        } else {
-            return res.json({ message: 'Admin account already exists' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    res.json({ message: 'MongoDB Seeding bypassed. Use Google Sheets for user management.' });
 });
 
-// Production Mode (Vercel Serverless): Ensure DB connection on every request
+// Production Mode: We NO LONGER block on MongoDB failure
 app.use(async (req, res, next) => {
-    if (process.env.NODE_ENV === 'production') {
-        try {
-            await connectDB();
-            next();
-        } catch (err) {
-            console.error('Database connection error:', err);
-            return res.status(500).json({
-                message: 'Database connection failed',
-                error: err.message,
-                stack: err.stack,
-                uriUsed: process.env.MONGO_URI ? (process.env.MONGO_URI.substring(0, 30) + '...') : 'NULL/MISSING'
-            });
-        }
-    } else {
-        next();
+    // Optional DB connection - don't await or catch failure
+    if (process.env.NODE_ENV === 'production' && process.env.MONGO_URI) {
+        connectDB().catch(err => console.log('DB connection failed in background:', err.message));
     }
+    next();
 });
 
 // Basic Route
 app.get('/', (req, res) => {
-    res.send('GFG Generation for God API is running');
+    res.send('GFG Generation for God API is running (Sheets Mode)');
 });
 
 // Routes
@@ -102,47 +67,26 @@ app.use('/api/submissions', require('./routes/submissionRoutes'));
 
 // Development Mode: Socket.io, Cron, and Server Listening
 if (process.env.NODE_ENV !== 'production') {
-    // Connect to Database
-    connectDB();
+    connectDB().catch(err => console.log('Local DB connection failed:', err.message));
 
-    // Cron Job for Daily Updates
     const cron = require('node-cron');
     cron.schedule('0 0 * * *', () => {
         console.log('Running daily maintenance tasks...');
     });
 
-    // Start server with Socket.io
     const server = app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 
     const io = require('socket.io')(server, {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
+        cors: { origin: "*", methods: ["GET", "POST"] }
     });
 
     io.on('connection', (socket) => {
-        console.log('New client connected:', socket.id);
-
-        socket.on('join_room', (room) => {
-            socket.join(room);
-            console.log(`User joined room: ${room}`);
-        });
-
-        socket.on('send_message', (data) => {
-            io.to(data.room).emit('receive_message', data);
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Client disconnected');
-        });
+        socket.on('join_room', (room) => socket.join(room));
+        socket.on('send_message', (data) => io.to(data.room).emit('receive_message', data));
     });
+} else {
+    // Export app for Vercel Serverless
+    module.exports = app;
 }
-
-// Development Mode: Socket.io, Cron, and Server Listening
-
-// Export app for Vercel Serverless
-module.exports = app;
-

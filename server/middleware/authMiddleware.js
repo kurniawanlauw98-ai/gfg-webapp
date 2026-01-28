@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { getRows } = require('../config/googleSheets');
 
 const protect = async (req, res, next) => {
     let token;
@@ -9,14 +9,30 @@ const protect = async (req, res, next) => {
         req.headers.authorization.startsWith('Bearer')
     ) {
         try {
-            // Get token from header
             token = req.headers.authorization.split(' ')[1];
-
-            // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Get user from the token
-            req.user = await User.findById(decoded.id).select('-password');
+            // Special Admin Case
+            if (decoded.id === 'ADMIN_001') {
+                req.user = { id: 'ADMIN_001', name: 'Super Admin', email: 'admingfg@gfg.org', role: 'admin' };
+                return next();
+            }
+
+            // Find user in Sheet
+            const rows = await getRows('Users');
+            const userRow = rows.find(r => r.ID === decoded.id);
+
+            if (!userRow) {
+                return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
+
+            req.user = {
+                id: userRow.ID,
+                name: userRow.Name,
+                email: userRow.Email,
+                role: userRow.Role || 'user',
+                points: parseInt(userRow.Points) || 0
+            };
 
             next();
         } catch (error) {
