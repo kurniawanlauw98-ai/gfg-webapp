@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Html5QrcodeScanner } from 'html5-qrcode'
-import axios from 'axios'
+import api from '../api'
 import toast from 'react-hot-toast'
 import { API_URL } from '../config'
 
@@ -51,7 +51,7 @@ const QRScanner = () => {
             // For simplicity, just hitting the endpoint is enough as per current backend logic,
             // but let's assume we send the code to be safe.
 
-            const res = await axios.post(`${API_URL}/api/attendance`, { method: 'qr', code: code })
+            const res = await api.post('/api/attendance', { method: 'qr', code: code })
             toast.success(`Attendance Marked! +${res.data.pointsAdded} Points`)
         } catch (error) {
             toast.error(error.response?.data?.message || 'Error marking attendance')

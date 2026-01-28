@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Navbar from '../components/Navbar'
-import axios from 'axios'
+import api from '../api'
 import toast from 'react-hot-toast'
 import { API_URL } from '../config'
 
@@ -11,7 +11,7 @@ const AdminDashboard = () => {
     const handleCreateEvent = async (e) => {
         e.preventDefault()
         try {
-            await axios.post(`${API_URL}/api/events`, eventData)
+            await api.post('/api/events', eventData)
             toast.success('Event Created')
             setEventData({ title: '', date: '', location: '', description: '' })
         } catch (error) {
@@ -27,7 +27,7 @@ const AdminDashboard = () => {
                 options: [quizData.option1, quizData.option2, quizData.option3],
                 correctIndex: parseInt(quizData.correctIndex)
             }
-            await axios.post(`${API_URL}/api/daily/quiz`, payload)
+            await api.post('/api/daily/quiz', payload)
             toast.success('Quiz Created')
             setQuizData({ question: '', option1: '', option2: '', option3: '', correctIndex: 0 })
         } catch (error) {

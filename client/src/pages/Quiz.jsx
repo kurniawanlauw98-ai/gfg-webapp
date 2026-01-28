@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { API_URL } from '../config'
@@ -14,7 +14,7 @@ const Quiz = () => {
     useEffect(() => {
         const fetchQuiz = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/daily/quiz`)
+                const res = await api.get('/api/daily/quiz')
                 setQuiz(res.data.quiz)
             } catch (error) {
                 // If 404, just null
@@ -28,7 +28,7 @@ const Quiz = () => {
     const handleSubmit = async () => {
         if (selectedOption === null) return
         try {
-            const res = await axios.post(`${API_URL}/api/daily/quiz/submit`, { answerIndex: selectedOption })
+            const res = await api.post('/api/daily/quiz/submit', { answerIndex: selectedOption })
             if (res.data.correct) {
                 toast.success(`Correct! +${res.data.pointsAdded} Points`)
             } else {

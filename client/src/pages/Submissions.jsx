@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import toast from 'react-hot-toast'
 import { API_URL } from '../config'
 
@@ -14,7 +14,7 @@ const Submissions = () => {
 
         setLoading(true)
         try {
-            const res = await axios.post(`${API_URL}/api/submissions`, { type, content })
+            const res = await api.post('/api/submissions', { type, content })
             toast.success(`Submitted successfully! +${res.data.pointsAdded} Points`)
             setContent('')
         } catch (error) {

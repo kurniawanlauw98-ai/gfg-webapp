@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import api from '../api'
 import toast from 'react-hot-toast'
 import { API_URL } from '../config'
 import { useNavigate, Routes, Route, Link } from 'react-router-dom'
@@ -18,7 +18,7 @@ const DashboardHome = () => {
     useEffect(() => {
         const fetchVerse = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/daily/verse`)
+                const res = await api.get('/api/daily/verse')
                 setVerse(res.data)
             } catch (error) {
                 console.error(error)
@@ -30,7 +30,7 @@ const DashboardHome = () => {
     const handleAttendance = async () => {
         setAttendanceLoading(true)
         try {
-            const res = await axios.post(`${API_URL}/api/attendance`, { method: 'code' })
+            const res = await api.post('/api/attendance', { method: 'code' })
             toast.success(`Attendance Marked! +${res.data.pointsAdded} Points`)
         } catch (error) {
             toast.error(error.response?.data?.message || 'Error marking attendance')
