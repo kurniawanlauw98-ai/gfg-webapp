@@ -21,11 +21,12 @@ const initDoc = async () => {
 const syncToSheet = async (title, data) => {
     try {
         await initDoc();
-        let sheet = doc.sheetsByTitle[title];
+        const document = getDoc();
+        let sheet = document.sheetsByTitle[title];
 
         if (!sheet) {
             const headers = Object.keys(data[0] || {});
-            sheet = await doc.addSheet({ title, headerValues: headers });
+            sheet = await document.addSheet({ title, headerValues: headers });
         }
 
         await sheet.addRows(data);
@@ -41,7 +42,8 @@ const syncToSheet = async (title, data) => {
 const getRows = async (title) => {
     try {
         await initDoc();
-        const sheet = doc.sheetsByTitle[title];
+        const document = getDoc();
+        const sheet = document.sheetsByTitle[title];
         if (!sheet) return [];
         return await sheet.getRows();
     } catch (error) {
@@ -56,7 +58,8 @@ const getRows = async (title) => {
 const updateUserPoints = async (email, pointsToAdd) => {
     try {
         await initDoc();
-        const sheet = doc.sheetsByTitle['Users'];
+        const document = getDoc();
+        const sheet = document.sheetsByTitle['Users'];
         if (!sheet) return;
         const rows = await sheet.getRows();
         const row = rows.find(r => r.Email === email);
