@@ -2,7 +2,7 @@
     "name": "gfg-server",
     "version": "1.0.0",
     "description": "Backend for GFG Generation for God",
-    "main": "server.js",
+    "main": "index.js",
     "type": "commonjs",
     "scripts": {
         "start": "node server.js",
