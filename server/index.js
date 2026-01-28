@@ -1,3 +1,5 @@
+console.log("Vercel Function Initializing...");
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -9,20 +11,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Absolute Minimal Routes
+// Diagnostic logging
+console.log("Environment check:", {
+    NODE_ENV: process.env.NODE_ENV,
+    HAS_SHEETS_ID: !!process.env.GOOGLE_SHEETS_ID
+});
+
+// Minimal Routes
 app.get('/api/ping', (req, res) => {
     res.json({
         message: 'pong',
         timestamp: new Date().toISOString(),
-        env_check: {
-            node_env: process.env.NODE_ENV,
-            has_sheets_id: !!process.env.GOOGLE_SHEETS_ID
-        }
+        status: 'online'
     });
 });
 
 app.get('/', (req, res) => {
-    res.send('GFG Minimal API Test');
+    res.send('GFG Backend is Online (Minimal Mode)');
 });
 
 module.exports = app;
