@@ -43,7 +43,7 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-// app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 // app.use('/api/events', require('./routes/eventRoutes'));
 // app.use('/api/attendance', require('./routes/attendanceRoutes'));
 // app.use('/api/daily', require('./routes/dailyRoutes'));
