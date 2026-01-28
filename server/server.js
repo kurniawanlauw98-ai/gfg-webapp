@@ -37,6 +37,37 @@ app.get('/api/health', async (req, res) => {
     });
 });
 
+// Emergency Seed Route (Admin only)
+app.get('/api/seed-admin', async (req, res) => {
+    try {
+        await connectDB();
+        const User = require('./models/User');
+        const bcrypt = require('bcryptjs');
+
+        const adminEmail = 'admingfg@gfg.org';
+        const adminExists = await User.findOne({ email: adminEmail });
+
+        if (!adminExists) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash('gracetoyou', salt);
+
+            await User.create({
+                name: 'Super Admin',
+                email: adminEmail,
+                password: hashedPassword,
+                role: 'admin',
+                referralCode: 'ADMIN1',
+                isVerified: true
+            });
+            return res.json({ message: 'Admin account created successfully' });
+        } else {
+            return res.json({ message: 'Admin account already exists' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Production Mode (Vercel Serverless): Ensure DB connection on every request
 app.use(async (req, res, next) => {
     if (process.env.NODE_ENV === 'production') {
