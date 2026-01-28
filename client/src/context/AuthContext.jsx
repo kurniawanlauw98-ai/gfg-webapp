@@ -16,9 +16,13 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('user')
 
         if (token && storedUser) {
-            setUser(JSON.parse(storedUser))
-            // Optional: Verify token with backend /api/auth/me
-            // For now, trust local storage for simple persist
+            try {
+                setUser(JSON.parse(storedUser))
+            } catch (err) {
+                console.error("Session parse error:", err);
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+            }
         }
         setLoading(false)
     }, [])
