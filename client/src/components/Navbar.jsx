@@ -21,6 +21,9 @@ const Navbar = () => {
                         </Link>
                         <div className="ml-10 flex space-x-4">
                             <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Home</Link>
+                            {user?.role === 'admin' && (
+                                <Link to="/admin" className="text-blue-600 font-bold px-3 py-2 rounded-md text-sm">Admin</Link>
+                            )}
                             <Link to="/dashboard/events" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Events</Link>
                             <Link to="/dashboard/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">About</Link>
                         </div>
