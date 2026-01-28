@@ -86,7 +86,5 @@ if (process.env.NODE_ENV !== 'production') {
         socket.on('join_room', (room) => socket.join(room));
         socket.on('send_message', (data) => io.to(data.room).emit('receive_message', data));
     });
-} else {
     // Export app for Vercel Serverless
     module.exports = app;
-}
