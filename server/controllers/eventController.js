@@ -1,11 +1,23 @@
-const Event = require('../models/Event');
+const { syncToSheet, getRows } = require('../config/googleSheets');
 
 // @desc    Get all upcoming events
 // @route   GET /api/events
 // @access  Public
 const getEvents = async (req, res) => {
     try {
-        const events = await Event.find({ date: { $gte: new Date() } }).sort({ date: 1 });
+        const rows = await getRows('Events');
+        const now = new Date();
+        const events = rows
+            .map(r => ({
+                id: r.ID,
+                title: r.Title,
+                date: r.Date,
+                location: r.Location,
+                description: r.Description
+            }))
+            .filter(e => new Date(e.date) >= now)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
         res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -23,13 +35,17 @@ const createEvent = async (req, res) => {
     }
 
     try {
-        const event = await Event.create({
-            title,
-            date,
-            location,
-            description,
-            createdBy: req.user.id
-        });
+        const eventId = Date.now().toString();
+        const event = {
+            ID: eventId,
+            Title: title,
+            Date: date,
+            Location: location,
+            Description: description,
+            CreatedBy: req.user.name
+        };
+
+        await syncToSheet('Events', [event]);
 
         res.status(201).json(event);
     } catch (error) {

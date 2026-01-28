@@ -1,4 +1,4 @@
-const { getRows } = require('../config/googleSheets');
+const { getRows, syncToSheet, updateUserPoints } = require('../config/googleSheets');
 
 // Helper: Get today's date string YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -22,7 +22,11 @@ const getDailyVerse = async (req, res) => {
         });
     } catch (error) {
         console.error('Verse Fetch Error:', error);
-        res.status(500).json({ message: 'Daily verse unavailable temporarily' });
+        res.status(200).json({
+            type: 'verse',
+            date: getTodayString(),
+            verse: { text: 'Kasih karunia Tuhan menyertai kamu.', reference: 'GFG 1:1', version: 'GFG' }
+        });
     }
 };
 
@@ -57,7 +61,6 @@ const getDailyQuiz = async (req, res) => {
 // @access  Private
 const submitQuiz = async (req, res) => {
     const { answerIndex } = req.body;
-    const userId = req.user.id;
     const today = getTodayString();
 
     try {
@@ -69,7 +72,6 @@ const submitQuiz = async (req, res) => {
         }
 
         if (parseInt(answerIndex) === parseInt(quizRow.CorrectIndex)) {
-            const { updateUserPoints } = require('../config/googleSheets');
             await updateUserPoints(req.user.email, 20);
             return res.status(200).json({ message: 'Correct!', pointsAdded: 20, correct: true });
         } else {
@@ -80,8 +82,34 @@ const submitQuiz = async (req, res) => {
     }
 };
 
+// @desc    Create Daily Quiz (Admin)
+// @route   POST /api/daily/quiz
+// @access  Private/Admin
+const createDailyQuiz = async (req, res) => {
+    const { question, options, correctIndex, date } = req.body;
+
+    if (!question || !options || correctIndex === undefined) {
+        return res.status(400).json({ message: 'Please add all required fields' });
+    }
+
+    try {
+        const newQuiz = {
+            Date: date || getTodayString(),
+            Question: question,
+            Options: Array.isArray(options) ? options.join('|') : options,
+            CorrectIndex: correctIndex.toString()
+        };
+
+        await syncToSheet('Quizzes', [newQuiz]);
+        res.status(201).json(newQuiz);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getDailyVerse,
     getDailyQuiz,
-    submitQuiz
+    submitQuiz,
+    createDailyQuiz
 };
