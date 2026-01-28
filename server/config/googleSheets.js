@@ -1,18 +1,29 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 require('dotenv').config();
 
-const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID);
+let doc;
+
+const getDoc = () => {
+    if (!doc) {
+        if (!process.env.GOOGLE_SHEETS_ID) {
+            throw new Error('GOOGLE_SHEETS_ID is missing');
+        }
+        doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_ID);
+    }
+    return doc;
+};
 
 const initDoc = async () => {
     if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_ID) {
         throw new Error('Missing Google Sheets Environment Variables (EMAIL, PRIVATE_KEY, or ID)');
     }
 
-    await doc.useServiceAccountAuth({
+    const document = getDoc();
+    await document.useServiceAccountAuth({
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n').replace(/"/g, ''),
     });
-    await doc.loadInfo();
+    await document.loadInfo();
 };
 
 /**
