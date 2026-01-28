@@ -3,21 +3,55 @@ const { getRows, syncToSheet, updateUserPoints } = require('../config/googleShee
 // Helper: Get today's date string YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
-// @desc    Get Daily Verse (Auto-fetch via API)
+// @desc    Get Daily Verse (Indonesian TB)
 // @route   GET /api/daily/verse
 // @access  Public
 const getDailyVerse = async (req, res) => {
     try {
-        const response = await fetch('https://bible-api.com/?random=verse');
+        const verses = [
+            { book: 'Yohanes', ref: '3:16' },
+            { book: 'Yeremia', ref: '29:11' },
+            { book: 'Filipi', ref: '4:13' },
+            { book: 'Mazmur', ref: '23:1' },
+            { book: 'Amsal', ref: '3:5' },
+            { book: 'Roma', ref: '8:28' },
+            { book: 'Yosua', ref: '1:9' },
+            { book: 'Matius', ref: '11:28' },
+            { book: 'Galatia', ref: '5:22-23' },
+            { book: 'Mazmur', ref: '46:2' },
+            { book: 'Yesaya', ref: '41:10' },
+            { book: '1 Korintus', ref: '13:4' },
+            { book: 'Matius', ref: '6:33' },
+            { book: 'Amsal', ref: '16:3' },
+            { book: 'Mazmur', ref: '37:4' }
+        ];
+
+        const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+        const [chapter, verseRange] = randomVerse.ref.split(':');
+
+        // Fetch from Indonesian Bible API
+        const response = await fetch(`https://api-alkitab.vercel.app/api/passage/${randomVerse.book}/${chapter}?ver=tb`);
         const data = await response.json();
+
+        // Find the specific verse in the chapter data
+        // The API returns the whole chapter, we filter for our ref
+        const verseText = data.verses
+            .filter(v => {
+                const requestedVerses = verseRange.includes('-')
+                    ? range(parseInt(verseRange.split('-')[0]), parseInt(verseRange.split('-')[1]))
+                    : [parseInt(verseRange)];
+                return requestedVerses.includes(v.verse);
+            })
+            .map(v => v.content)
+            .join(' ');
 
         res.status(200).json({
             type: 'verse',
             date: getTodayString(),
             verse: {
-                text: data.text,
-                reference: data.reference,
-                version: data.translation_name || 'WEB'
+                text: verseText || 'Tuhanlah gembalaku, takkan kekurangan aku.',
+                reference: `${randomVerse.book} ${randomVerse.ref}`,
+                version: 'Terjemahan Baru (TB)'
             }
         });
     } catch (error) {
@@ -29,6 +63,11 @@ const getDailyVerse = async (req, res) => {
         });
     }
 };
+
+// Helper for ranges
+function range(start, end) {
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
 
 // @desc    Get Daily Quiz (From Sheet)
 // @route   GET /api/daily/quiz
