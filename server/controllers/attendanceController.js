@@ -24,6 +24,12 @@ const markAttendance = async (req, res) => {
 
         const dateString = new Date().toLocaleString();
         const method = req.body.method || 'qr';
+        const code = req.body.code;
+
+        // Basic verification: The QR must contain this secret string
+        if (method === 'qr' && code !== 'GFG_ATTENDANCE_SECRET') {
+            return res.status(400).json({ message: 'Invalid QR Code' });
+        }
 
         // Add points to user in Sheet
         await updateUserPoints(userEmail, 10);

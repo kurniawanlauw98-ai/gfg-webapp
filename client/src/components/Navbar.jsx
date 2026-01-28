@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import logo from '../assets/logo.jpg'
 
 const Navbar = () => {
     const { user, logout } = useAuth()
@@ -16,8 +17,11 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
-                        <Link to="/dashboard" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-red-600">
-                            GFG
+                        <Link to="/dashboard" className="flex items-center gap-2">
+                            <img src={logo} alt="GFG Logo" className="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm" />
+                            <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-red-600">
+                                GFG
+                            </span>
                         </Link>
                         <div className="ml-10 flex space-x-4">
                             <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Home</Link>

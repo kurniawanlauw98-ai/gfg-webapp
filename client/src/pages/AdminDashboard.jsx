@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import Navbar from '../components/Navbar'
 import api from '../api'
 import toast from 'react-hot-toast'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const AdminDashboard = () => {
     const [eventData, setEventData] = useState({ title: '', date: '', location: '', description: '' })
@@ -167,6 +168,35 @@ const AdminDashboard = () => {
                                     {loading ? 'Updating...' : <><span className="text-xl">+</span> Add Admin</>}
                                 </button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+
+                {/* QR Section - Full Width */}
+                <div className="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6 border-b border-gray-50 bg-yellow-50/50">
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="text-2xl">⚡</span> Attendance QR Code
+                        </h2>
+                    </div>
+                    <div className="p-8 flex flex-col md:flex-row items-center justify-center gap-12">
+                        <div className="bg-white p-6 rounded-2xl shadow-xl border-4 border-yellow-400">
+                            <QRCodeCanvas value="GFG_ATTENDANCE_SECRET" size={256} level="H" />
+                        </div>
+                        <div className="max-w-md text-center md:text-left">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">Official Attendance QR</h3>
+                            <p className="text-gray-600 mb-6 leading-relaxed">
+                                Show this barcode during the service or event. Users can scan this using the
+                                <strong> "Daily Attendance"</strong> menu on their phones to mark their presence.
+                            </p>
+                            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                                <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full font-bold text-sm">
+                                    ✓ Verified Token
+                                </span>
+                                <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-sm">
+                                    ✓ +10 Points per Scan
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

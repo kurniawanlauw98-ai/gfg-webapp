@@ -53,6 +53,16 @@ const registerUser = async (req, res) => {
 
         await syncToSheet('Users', [newUser]);
 
+        // Reward the referrer if code exists
+        if (referralCode) {
+            const allUsers = await getRows('Users');
+            const referrer = allUsers.find(r => r.ReferralCode === referralCode.toUpperCase());
+            if (referrer) {
+                const { updateUserPoints } = require('../config/googleSheets');
+                await updateUserPoints(referrer.Email, 50);
+            }
+        }
+
         res.status(201).json({
             _id: newUser.ID,
             name: newUser.Name,

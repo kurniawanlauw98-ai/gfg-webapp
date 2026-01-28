@@ -13,7 +13,6 @@ import QRScanner from './QRScanner'
 const DashboardHome = () => {
     const { user } = useAuth()
     const [verse, setVerse] = useState(null)
-    const [attendanceLoading, setAttendanceLoading] = useState(false)
 
     useEffect(() => {
         const fetchVerse = async () => {
@@ -26,18 +25,6 @@ const DashboardHome = () => {
         }
         fetchVerse()
     }, [])
-
-    const handleAttendance = async () => {
-        setAttendanceLoading(true)
-        try {
-            const res = await api.post('/api/attendance', { method: 'code' })
-            toast.success(`Attendance Marked! +${res.data.pointsAdded} Points`)
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Error marking attendance')
-        } finally {
-            setAttendanceLoading(false)
-        }
-    }
 
     return (
         <div className="space-y-6">
@@ -65,14 +52,10 @@ const DashboardHome = () => {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button
-                    onClick={handleAttendance}
-                    disabled={attendanceLoading}
-                    className="p-4 bg-green-50 rounded-xl border border-green-100 hover:bg-green-100 transition flex flex-col items-center justify-center gap-2 text-green-700"
-                >
+                <Link to="/dashboard/scan" className="p-4 bg-green-50 rounded-xl border border-green-100 hover:bg-green-100 transition flex flex-col items-center justify-center gap-2 text-green-700">
                     <span className="text-2xl">📅</span>
                     <span className="font-medium">Daily Attendance</span>
-                </button>
+                </Link>
                 <Link to="/dashboard/quiz" className="p-4 bg-yellow-50 rounded-xl border border-yellow-100 hover:bg-yellow-100 transition flex flex-col items-center justify-center gap-2 text-yellow-700">
                     <span className="text-2xl">🧩</span>
                     <span className="font-medium">Daily Quiz</span>
