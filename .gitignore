@@ -38,6 +38,7 @@ Lightshot/
 *.json
 !package.json
 !package-lock.json
+!vercel.json
 
 # Local Snapshots
 .snapshots/
