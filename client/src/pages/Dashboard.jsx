@@ -50,6 +50,21 @@ const DashboardHome = () => {
                 </div>
             </div>
 
+            {/* Admin Quick Jump */}
+            {user?.role === 'admin' && (
+                <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div>
+                        <h3 className="text-blue-900 font-bold text-lg flex items-center gap-2">
+                            <span className="text-2xl">🛡️</span> Admin Access
+                        </h3>
+                        <p className="text-blue-700 text-sm">You are logged in as an administrator.</p>
+                    </div>
+                    <Link to="/admin" className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md">
+                        Open Admin Console
+                    </Link>
+                </div>
+            )}
+
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Link to="/dashboard/scan" className="p-4 bg-green-50 rounded-xl border border-green-100 hover:bg-green-100 transition flex flex-col items-center justify-center gap-2 text-green-700">
