@@ -80,7 +80,17 @@ const getDailyQuiz = async (req, res) => {
         const quizRow = rows.find(r => r.Date === today);
 
         if (!quizRow) {
-            return res.status(404).json({ message: 'No quiz available for today' });
+            // Return a default demo quiz instead of 404
+            return res.status(200).json({
+                type: 'quiz',
+                date: today,
+                quiz: {
+                    question: 'Siapakah yang membangun bahtera?',
+                    options: ['Musa|Nuh|Daud'],
+                    correctIndex: 1, // Nuh
+                    isDemo: true
+                }
+            });
         }
 
         res.status(200).json({
@@ -88,7 +98,8 @@ const getDailyQuiz = async (req, res) => {
             date: today,
             quiz: {
                 question: quizRow.Question,
-                options: (quizRow.Options || '').split('|')
+                options: (quizRow.Options || '').split('|'),
+                isDemo: false
             }
         });
     } catch (error) {
