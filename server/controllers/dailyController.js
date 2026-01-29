@@ -1,4 +1,5 @@
 const { getRows, syncToSheet, updateUserPoints } = require('../config/googleSheets');
+const axios = require('axios');
 
 // Helper: Get today's date string YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -30,8 +31,8 @@ const getDailyVerse = async (req, res) => {
         const [chapter, verseRange] = randomVerse.ref.split(':');
 
         // Fetch from Indonesian Bible API
-        const response = await fetch(`https://api-alkitab.vercel.app/api/passage/${randomVerse.book}/${chapter}?ver=tb`);
-        const data = await response.json();
+        const response = await axios.get(`https://api-alkitab.vercel.app/api/passage/${randomVerse.book}/${chapter}?ver=tb`);
+        const data = response.data;
 
         // Find the specific verse in the chapter data
         // The API returns the whole chapter, we filter for our ref

