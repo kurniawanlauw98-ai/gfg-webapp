@@ -109,6 +109,9 @@ const Dashboard = () => {
                     <Route path="/scan" element={<QRScanner />} />
                 </Routes>
             </main>
+            <footer className="text-center text-gray-400 text-xs py-4">
+                GFG App v2.2 (Latest) • <span className="text-green-500">System Online</span>
+            </footer>
         </div>
     )
 }
