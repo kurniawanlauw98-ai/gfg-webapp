@@ -51,7 +51,10 @@ const Quiz = () => {
             </div>
 
             <div className="space-y-4 mb-8">
-                {quiz.options.map((option, index) => (
+                {(Array.isArray(quiz.options) && quiz.options.length === 1 && quiz.options[0].includes('|')
+                    ? quiz.options[0].split('|')
+                    : quiz.options
+                ).map((option, index) => (
                     <button
                         key={index}
                         onClick={() => setSelectedOption(index)}
