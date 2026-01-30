@@ -117,7 +117,28 @@ const loginUser = async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = async (req, res) => {
-    res.status(200).json(req.user);
+    try {
+        // Fetch fresh data from sheet
+        const userRow = await findUserInSheet(req.user.email);
+
+        if (userRow) {
+            const freshUser = {
+                id: userRow.ID,
+                name: userRow.Name,
+                email: userRow.Email,
+                role: (userRow.Name === 'dede kurniawan' || userRow.Role === 'admin') ? 'admin' : 'user',
+                points: parseInt(userRow.Points) || 0,
+                referralCode: userRow.ReferralCode
+            };
+            res.status(200).json(freshUser);
+        } else {
+            // Fallback to token data if sheet fails
+            res.status(200).json(req.user);
+        }
+    } catch (error) {
+        console.error("Error fetching fresh user data:", error);
+        res.status(200).json(req.user);
+    }
 };
 
 // @desc    Get leaderboard

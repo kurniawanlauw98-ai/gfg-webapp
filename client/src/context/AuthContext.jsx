@@ -11,20 +11,23 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Check for tokens
-        const token = localStorage.getItem('token')
-        const storedUser = localStorage.getItem('user')
-
-        if (token && storedUser) {
-            try {
-                setUser(JSON.parse(storedUser))
-            } catch (err) {
-                console.error("Session parse error:", err);
-                localStorage.removeItem('user');
-                localStorage.removeItem('token');
+        const verifySession = async () => {
+            const token = localStorage.getItem('token')
+            if (token) {
+                try {
+                    // Always verify with server to get latest Role/Points
+                    const res = await api.get('/api/auth/me')
+                    setUser(res.data)
+                    localStorage.setItem('user', JSON.stringify(res.data))
+                } catch (err) {
+                    console.error("Session verification failed:", err)
+                    localStorage.removeItem('user')
+                    localStorage.removeItem('token')
+                }
             }
+            setLoading(false)
         }
-        setLoading(false)
+        verifySession()
     }, [])
 
     const login = async (email, password) => {
