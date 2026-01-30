@@ -7,6 +7,8 @@ const getEvents = async (req, res) => {
     try {
         const rows = await getRows('Events');
         const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
         const events = rows
             .map(r => ({
                 id: r.ID,
@@ -15,7 +17,7 @@ const getEvents = async (req, res) => {
                 location: r.Location,
                 description: r.Description
             }))
-            .filter(e => new Date(e.date) >= now)
+            .filter(e => new Date(e.date) >= startOfToday)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
 
         res.status(200).json(events);

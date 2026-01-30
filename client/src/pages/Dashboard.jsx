@@ -24,12 +24,10 @@ const DashboardHome = () => {
 
                 // Fetch Events
                 const eventRes = await api.get('/api/events')
-                // Filter only future events just in case, though backend does it too
-                const futureEvents = eventRes.data
-                    .filter(e => new Date(e.date) >= new Date())
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                // Trust backend filtering, just ensure sorting
+                const sortedEvents = eventRes.data.sort((a, b) => new Date(a.date) - new Date(b.date))
 
-                setEvents(futureEvents)
+                setEvents(sortedEvents)
             } catch (error) {
                 console.error("Dashboard Fetch Error:", error)
             }
