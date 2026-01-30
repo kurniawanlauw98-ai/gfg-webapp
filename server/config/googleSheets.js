@@ -21,6 +21,7 @@ const initDoc = async () => {
     const document = getDoc();
     const privateKey = process.env.GOOGLE_PRIVATE_KEY
         .replace(/\\n/g, '\n')
+        .replace(/\n/g, '\n') // Ensure literal newlines are handled
         .replace(/"/g, '')
         .replace(/'/g, '')
         .trim();
@@ -149,12 +150,20 @@ const testConnection = async () => {
         return {
             success: true,
             title: document.title,
-            sheets: document.sheetsByIndex.map(s => s.title)
+            sheets: document.sheetsByIndex.map(s => s.title),
+            key_diagnostic: {
+                length: process.env.GOOGLE_PRIVATE_KEY?.length,
+                starts_with: process.env.GOOGLE_PRIVATE_KEY?.substring(0, 20)
+            }
         };
     } catch (error) {
         return {
             success: false,
-            error: error.message
+            error: error.message,
+            key_diagnostic: {
+                length: process.env.GOOGLE_PRIVATE_KEY?.length,
+                starts_with: process.env.GOOGLE_PRIVATE_KEY?.substring(0, 20)
+            }
         };
     }
 };
