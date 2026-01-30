@@ -43,7 +43,8 @@ const syncToSheet = async (title, data) => {
         await sheet.addRows(data);
         console.log(`Successfully synced ${data.length} rows to sheet: ${title}`);
     } catch (error) {
-        console.error(`Error syncing to Google Sheets (${title}):`, error);
+        console.error(`Error syncing to Google Sheets (${title}):`, error.message);
+        throw new Error(`Google Sheets Write Error: ${error.message}`);
     }
 };
 
@@ -77,9 +78,12 @@ const updateUserPoints = async (email, pointsToAdd) => {
         if (row) {
             row.Points = (parseInt(row.Points) || 0) + pointsToAdd;
             await row.save();
+        } else {
+            throw new Error(`User with email ${email} not found to update points`);
         }
     } catch (error) {
-        console.error(`Error updating points in Google Sheets:`, error);
+        console.error(`Error updating points in Google Sheets:`, error.message);
+        throw error;
     }
 };
 
@@ -129,4 +133,24 @@ const updateSheetRow = async (title, id, updatedData) => {
     }
 };
 
-module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow };
+/**
+ * Test Connection Diagnostic
+ */
+const testConnection = async () => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        return {
+            success: true,
+            title: document.title,
+            sheets: document.sheetsByIndex.map(s => s.title)
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
+module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow, testConnection };
