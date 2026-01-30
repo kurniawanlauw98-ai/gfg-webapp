@@ -23,7 +23,7 @@ app.get('/api/health', async (req, res) => {
     const sheetsStatus = await testConnection();
 
     res.json({
-        status: 'online',
+        status: 'online v2.5',
         mode: 'Google Sheets DB (Standard)',
         sheets_connection: sheetsStatus,
         env: {
