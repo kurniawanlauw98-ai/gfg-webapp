@@ -56,11 +56,23 @@ const getDailyVerse = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Verse Fetch Error:', error);
+        console.error('Verse Fetch Error:', error.message);
+
+        // Robust Fallback: List of full Indonesian verses if API fails
+        const fallbackVerses = [
+            { text: "Karena begitu besar kasih Allah akan dunia ini, sehingga Ia telah mengaruniakan Anak-Nya yang tunggal, supaya setiap orang yang percaya kepada-Nya tidak binasa, melainkan beroleh hidup yang kekal.", reference: "Yohanes 3:16", version: "TB" },
+            { text: "Segala perkara dapat kutanggung di dalam Dia yang memberi kekuatan kepadaku.", reference: "Filipi 4:13", version: "TB" },
+            { text: "Percayalah kepada TUHAN dengan segenap hatimu, dan janganlah bersandar kepada pengertianmu sendiri.", reference: "Amsal 3:5", version: "TB" },
+            { text: "Tuhanlah gembalaku, takkan kekurangan aku.", reference: "Mazmur 23:1", version: "TB" },
+            { text: "Kita tahu sekarang, bahwa Allah turut bekerja dalam segala sesuatu untuk mendatangkan kebaikan bagi mereka yang mengasihi Dia.", reference: "Roma 8:28", version: "TB" }
+        ];
+
+        const randomFallback = fallbackVerses[Math.floor(Math.random() * fallbackVerses.length)];
+
         res.status(200).json({
             type: 'verse',
             date: getTodayString(),
-            verse: { text: 'Kasih karunia Tuhan menyertai kamu.', reference: 'GFG 1:1', version: 'GFG' }
+            verse: randomFallback
         });
     }
 };
