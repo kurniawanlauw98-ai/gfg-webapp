@@ -8,7 +8,21 @@ const AdminDashboard = () => {
     const [eventData, setEventData] = useState({ title: '', date: '', location: '', description: '' })
     const [quizData, setQuizData] = useState({ question: '', option1: '', option2: '', option3: '', correctIndex: 0 })
     const [adminEmail, setAdminEmail] = useState('')
+    const [events, setEvents] = useState([])
     const [loading, setLoading] = useState(false)
+
+    const fetchEvents = async () => {
+        try {
+            const res = await api.get('/api/events')
+            setEvents(res.data)
+        } catch (error) {
+            console.error('Fetch events error:', error)
+        }
+    }
+
+    React.useEffect(() => {
+        fetchEvents()
+    }, [])
 
     const handleCreateEvent = async (e) => {
         e.preventDefault()
@@ -17,6 +31,7 @@ const AdminDashboard = () => {
             await api.post('/api/events', eventData)
             toast.success('Event Created successfully!')
             setEventData({ title: '', date: '', location: '', description: '' })
+            fetchEvents() // Refresh list
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to create event')
         } finally {
@@ -55,6 +70,17 @@ const AdminDashboard = () => {
             toast.error(error.response?.data?.message || 'Failed to update user role')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleDeleteEvent = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this event?')) return
+        try {
+            await api.delete(`/api/events/${id}`)
+            toast.success('Event deleted')
+            fetchEvents()
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete event')
         }
     }
 
@@ -169,6 +195,50 @@ const AdminDashboard = () => {
                                 </button>
                             </form>
                         </div>
+                    </div>
+                </div>
+
+                {/* Event List Management */}
+                <div className="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="text-2xl">📋</span> Current Events Management
+                        </h2>
+                    </div>
+                    <div className="p-6 overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="px-4 py-3 text-sm font-bold text-gray-600">Event Title</th>
+                                    <th className="px-4 py-3 text-sm font-bold text-gray-600">Date</th>
+                                    <th className="px-4 py-3 text-sm font-bold text-gray-600">Location</th>
+                                    <th className="px-4 py-3 text-sm font-bold text-gray-600 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {events.length > 0 ? (
+                                    events.map(event => (
+                                        <tr key={event.id} className="hover:bg-gray-50/50 transition">
+                                            <td className="px-4 py-4 font-medium text-gray-800">{event.title}</td>
+                                            <td className="px-4 py-4 text-sm text-gray-500">{new Date(event.date).toLocaleDateString()}</td>
+                                            <td className="px-4 py-4 text-sm text-gray-500">{event.location}</td>
+                                            <td className="px-4 py-4 text-right">
+                                                <button
+                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                    className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-1 ml-auto"
+                                                >
+                                                    🗑️ <span>Delete</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-4 py-8 text-center text-gray-400">No events found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 

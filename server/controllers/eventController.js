@@ -53,7 +53,26 @@ const createEvent = async (req, res) => {
     }
 };
 
+// @desc    Delete an event
+// @route   DELETE /api/events/:id
+// @access  Private/Admin
+const deleteEvent = async (req, res) => {
+    try {
+        const { deleteSheetRow } = require('../config/googleSheets');
+        const success = await deleteSheetRow('Events', req.params.id);
+
+        if (success) {
+            res.status(200).json({ message: 'Event deleted' });
+        } else {
+            res.status(404).json({ message: 'Event not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getEvents,
-    createEvent
+    createEvent,
+    deleteEvent
 };

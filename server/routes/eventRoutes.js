@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getEvents, createEvent } = require('../controllers/eventController');
+const { getEvents, createEvent, deleteEvent } = require('../controllers/eventController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Middleware to check admin role
@@ -14,5 +14,6 @@ const adminOnly = (req, res, next) => {
 
 router.get('/', getEvents);
 router.post('/', protect, adminOnly, createEvent);
+router.delete('/:id', protect, adminOnly, deleteEvent);
 
 module.exports = router;

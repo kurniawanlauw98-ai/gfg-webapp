@@ -141,6 +141,28 @@ const updateSheetRow = async (title, id, updatedData) => {
 };
 
 /**
+ * Generic Delete row by ID
+ */
+const deleteSheetRow = async (title, id) => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        const sheet = document.sheetsByTitle[title];
+        if (!sheet) return false;
+        const rows = await sheet.getRows();
+        const row = rows.find(r => r.ID === id);
+        if (row) {
+            await row.delete();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error(`Error deleting row in Google Sheets (${title}):`, error);
+        return false;
+    }
+};
+
+/**
  * Test Connection Diagnostic
  */
 const testConnection = async () => {
@@ -168,4 +190,4 @@ const testConnection = async () => {
     }
 };
 
-module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow, testConnection };
+module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow, deleteSheetRow, testConnection };
