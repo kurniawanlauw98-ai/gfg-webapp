@@ -19,9 +19,14 @@ const initDoc = async () => {
     }
 
     const document = getDoc();
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY
+        .replace(/\\n/g, '\n') // Handle escaped \n
+        .replace(/\n /g, '\n') // Handle potential indentation after \n
+        .replace(/^"(.*)"$/, '$1'); // Remove surrounding quotes if they exist
+
     await document.useServiceAccountAuth({
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/gm, '\n').replace(/"/g, ''),
+        private_key: privateKey,
     });
     await document.loadInfo();
 };
