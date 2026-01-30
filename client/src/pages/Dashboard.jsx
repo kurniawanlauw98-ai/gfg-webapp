@@ -15,6 +15,13 @@ const DashboardHome = () => {
     const [verse, setVerse] = useState(null)
     const [events, setEvents] = useState([])
 
+    const isBirthday = () => {
+        if (!user?.dob) return false
+        const today = new Date()
+        const birthDate = new Date(user.dob)
+        return today.getDate() === birthDate.getDate() && today.getMonth() === birthDate.getMonth()
+    }
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -24,19 +31,36 @@ const DashboardHome = () => {
 
                 // Fetch Events
                 const eventRes = await api.get('/api/events')
-                // Trust backend filtering, just ensure sorting
                 const sortedEvents = eventRes.data.sort((a, b) => new Date(a.date) - new Date(b.date))
-
                 setEvents(sortedEvents)
             } catch (error) {
                 console.error("Dashboard Fetch Error:", error)
             }
         }
         fetchData()
-    }, [])
+    }, [user])
 
     return (
         <div className="space-y-6">
+            {/* Birthday Celebration Banner */}
+            {isBirthday() && (
+                <div className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 p-8 rounded-3xl shadow-2xl text-white text-center relative overflow-hidden animate-bounce-subtle">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                        <div className="absolute top-2 left-4 text-4xl">🎈</div>
+                        <div className="absolute bottom-2 right-4 text-4xl">🎂</div>
+                        <div className="absolute top-1/2 left-1/4 text-4xl">✨</div>
+                        <div className="absolute top-10 right-10 text-4xl">🎊</div>
+                    </div>
+                    <h2 className="text-3xl font-black mb-2 italic">Happy Birthday, {user?.name}! 🥳</h2>
+                    <p className="text-lg opacity-90 font-medium">
+                        "The Lord bless you and keep you; the Lord make his face shine on you..." (Numbers 6:24-25)
+                    </p>
+                    <div className="mt-4 inline-block bg-white/20 backdrop-blur-md px-6 py-2 rounded-full text-sm font-bold border border-white/30">
+                        Special Admin Wish: Stay Blessed & Keep Inspiring! 🙏
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Stats Card */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

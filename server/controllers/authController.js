@@ -22,10 +22,10 @@ const findUserInSheet = async (email) => {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, referralCode } = req.body;
+        const { name, email, password, referralCode, dob, hobby, favoriteVerse } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Please add all fields' });
+        if (!name || !email || !password || !dob) {
+            return res.status(400).json({ message: 'Please add all required fields (Name, Email, Password, Birthday)' });
         }
 
         // Check if user exists in Sheet
@@ -48,6 +48,9 @@ const registerUser = async (req, res) => {
             Role: 'user',
             Points: '0',
             ReferralCode: newReferralCode,
+            DOB: dob,
+            Hobby: hobby,
+            FavoriteVerse: favoriteVerse,
             CreatedAt: new Date().toLocaleString()
         };
 
@@ -122,14 +125,23 @@ const getMe = async (req, res) => {
         const userRow = await findUserInSheet(req.user.email);
 
         if (userRow) {
+            // Robust point parsing
+            const rawPoints = userRow.Points || userRow.points || '0';
+            const parsedPoints = parseInt(rawPoints) || 0;
+
             const freshUser = {
                 id: userRow.ID,
                 name: userRow.Name,
                 email: userRow.Email,
                 role: (userRow.Name === 'dede kurniawan' || userRow.Role === 'admin') ? 'admin' : 'user',
-                points: parseInt(userRow.Points) || 0,
-                referralCode: userRow.ReferralCode
+                points: parsedPoints,
+                referralCode: userRow.ReferralCode,
+                dob: userRow.DOB,
+                hobby: userRow.Hobby,
+                favoriteVerse: userRow.FavoriteVerse
             };
+
+            console.log(`[getMe] Fetched fresh points for ${freshUser.email}: ${parsedPoints}`);
             res.status(200).json(freshUser);
         } else {
             // Fallback to token data if sheet fails
@@ -138,6 +150,29 @@ const getMe = async (req, res) => {
     } catch (error) {
         console.error("Error fetching fresh user data:", error);
         res.status(200).json(req.user);
+    }
+};
+
+// @desc    Get all users (Admin only)
+// @route   GET /api/auth/users
+// @access  Private/Admin
+const getUsers = async (req, res) => {
+    try {
+        const rows = await getRows('Users');
+        const users = rows.map(r => ({
+            id: r.ID,
+            name: r.Name,
+            email: r.Email,
+            role: r.Role,
+            points: parseInt(r.Points) || 0,
+            dob: r.DOB,
+            hobby: r.Hobby,
+            favoriteVerse: r.FavoriteVerse,
+            createdAt: r.CreatedAt
+        }));
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -185,5 +220,6 @@ module.exports = {
     loginUser,
     getMe,
     getLeaderboard,
-    upgradeToAdmin
+    upgradeToAdmin,
+    getUsers
 };

@@ -10,6 +10,7 @@ const AdminDashboard = () => {
     const [adminEmail, setAdminEmail] = useState('')
     const [events, setEvents] = useState([])
     const [loading, setLoading] = useState(false)
+    const [users, setUsers] = useState([])
 
     const fetchEvents = async () => {
         try {
@@ -20,9 +21,28 @@ const AdminDashboard = () => {
         }
     }
 
+    const fetchUsers = async () => {
+        try {
+            const res = await api.get('/api/auth/users')
+            setUsers(res.data)
+        } catch (error) {
+            console.error('Fetch users error:', error)
+        }
+    }
+
     React.useEffect(() => {
         fetchEvents()
+        fetchUsers()
     }, [])
+
+    const getBirthdaysToday = () => {
+        const today = new Date()
+        return users.filter(u => {
+            if (!u.dob) return false
+            const birthDate = new Date(u.dob)
+            return today.getDate() === birthDate.getDate() && today.getMonth() === birthDate.getMonth()
+        })
+    }
 
     const handleCreateEvent = async (e) => {
         e.preventDefault()
@@ -194,6 +214,67 @@ const AdminDashboard = () => {
                                     {loading ? 'Updating...' : <><span className="text-xl">+</span> Add Admin</>}
                                 </button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                    {/* Birthdays Section */}
+                    <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-pink-50/50">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <span className="text-2xl">🎉</span> Birthdays Today
+                            </h2>
+                            <span className="text-sm font-medium text-pink-600 bg-pink-100 px-3 py-1 rounded-full">
+                                {getBirthdaysToday().length} People
+                            </span>
+                        </div>
+                        <div className="p-6">
+                            {getBirthdaysToday().length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {getBirthdaysToday().map(u => (
+                                        <div key={u.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-2 opacity-20 text-3xl">🎈</div>
+                                            <h4 className="font-bold text-gray-900 text-lg">{u.name}</h4>
+                                            <p className="text-sm text-gray-500 mb-2">{u.email}</p>
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-gray-600"><strong>Hobby:</strong> {u.hobby || '-'}</p>
+                                                <p className="text-xs text-blue-600 italic"><strong>Verse:</strong> {u.favoriteVerse || '-'}</p>
+                                            </div>
+                                            <button className="mt-4 w-full bg-pink-600 text-white py-2 rounded-lg text-sm font-bold shadow-sm">
+                                                Say Happy Birthday!
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-gray-400">
+                                    <p className="text-4xl mb-2">🎈</p>
+                                    <p>No birthdays today.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Quick Stats or something else could go here */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <span className="text-2xl">📊</span> Community Stats
+                            </h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Total Members</span>
+                                <span className="font-bold text-2xl text-blue-600">{users.length}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Total Events</span>
+                                <span className="font-bold text-2xl text-green-600">{events.length}</span>
+                            </div>
+                            <div className="p-4 bg-blue-50 rounded-xl text-xs text-blue-700">
+                                Tip: You can now manage events and see member birthdays in real-time.
+                            </div>
                         </div>
                     </div>
                 </div>
