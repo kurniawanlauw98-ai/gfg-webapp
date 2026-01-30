@@ -13,17 +13,28 @@ import QRScanner from './QRScanner'
 const DashboardHome = () => {
     const { user } = useAuth()
     const [verse, setVerse] = useState(null)
+    const [events, setEvents] = useState([])
 
     useEffect(() => {
-        const fetchVerse = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/api/daily/verse')
-                setVerse(res.data)
+                // Fetch Verse
+                const verseRes = await api.get('/api/daily/verse')
+                setVerse(verseRes.data)
+
+                // Fetch Events
+                const eventRes = await api.get('/api/events')
+                // Filter only future events just in case, though backend does it too
+                const futureEvents = eventRes.data
+                    .filter(e => new Date(e.date) >= new Date())
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+
+                setEvents(futureEvents)
             } catch (error) {
-                console.error(error)
+                console.error("Dashboard Fetch Error:", error)
             }
         }
-        fetchVerse()
+        fetchData()
     }, [])
 
     return (
@@ -88,9 +99,31 @@ const DashboardHome = () => {
             {/* Events Section */}
             <div>
                 <h3 className="text-lg font-bold mb-4">Upcoming Events</h3>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">
-                    No upcoming events right now.
-                </div>
+                {events.length > 0 ? (
+                    <div className="space-y-4">
+                        {events.map((event) => (
+                            <div key={event.id || Math.random()} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition hover:shadow-md">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 text-lg">{event.title}</h4>
+                                        <p className="text-sm text-blue-600 font-medium mt-1">
+                                            📅 {new Date(event.date).toLocaleDateString()} • 📍 {event.location}
+                                        </p>
+                                    </div>
+                                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-lg">Upcoming</span>
+                                </div>
+                                <p className="text-gray-600 text-sm mt-3 leading-relaxed">
+                                    {event.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">
+                        <p className="mb-2">📅</p>
+                        No upcoming events right now.
+                    </div>
+                )}
             </div>
         </div>
     )
