@@ -20,9 +20,10 @@ const initDoc = async () => {
 
     const document = getDoc();
     const privateKey = process.env.GOOGLE_PRIVATE_KEY
-        .replace(/\\n/g, '\n') // Handle escaped \n
-        .replace(/\n /g, '\n') // Handle potential indentation after \n
-        .replace(/^"(.*)"$/, '$1'); // Remove surrounding quotes if they exist
+        .replace(/\\n/g, '\n')
+        .replace(/"/g, '')
+        .replace(/'/g, '')
+        .trim();
 
     await document.useServiceAccountAuth({
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
