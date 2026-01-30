@@ -130,8 +130,14 @@ const submitQuiz = async (req, res) => {
         const rows = await getRows('Quizzes');
         const quizRow = rows.find(r => r.Date === today);
 
+        // Handle Demo Quiz Submission
         if (!quizRow) {
-            return res.status(404).json({ message: 'No quiz for today' });
+            // Demo correct answer is Nuh (Index 1)
+            if (parseInt(answerIndex) === 1) {
+                return res.status(200).json({ message: 'Correct! (Demo)', pointsAdded: 0, correct: true });
+            } else {
+                return res.status(200).json({ message: 'Incorrect (Demo)', pointsAdded: 0, correct: false });
+            }
         }
 
         if (parseInt(answerIndex) === parseInt(quizRow.CorrectIndex)) {
