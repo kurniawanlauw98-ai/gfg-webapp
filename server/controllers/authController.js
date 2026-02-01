@@ -13,11 +13,13 @@ const generateToken = (id) => {
 /**
  * Helper to find user in sheet by Email
  */
-const findUserInSheet = async (email) => {
+const findUserInSheet = async (identifier) => {
     const rows = await getRows('Users');
     return rows.find(r => {
         const rowEmail = r.Email || r.email || '';
-        return rowEmail.toLowerCase() === email.toLowerCase();
+        const rowName = r.Name || r.name || '';
+        const search = identifier.toLowerCase();
+        return rowEmail.toLowerCase() === search || rowName.toLowerCase() === search;
     });
 };
 
@@ -89,6 +91,8 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+        // email field might contain name if frontend allows "Email or Name"
+        const identifier = email;
 
         // Special Admin Login (Bypasses Sheet for emergency)
         if (email === 'admingfg@gfg.org' && password === 'gracetoyou') {
@@ -101,7 +105,15 @@ const loginUser = async (req, res) => {
             });
         }
 
-        const userRow = await findUserInSheet(email);
+        const userRow = await findUserInSheet(identifier);
+
+        console.log(`[LOGIN DEBUG] Identifier: ${identifier}`);
+        if (userRow) {
+            console.log(`[LOGIN DEBUG] User Found: ${userRow.Name} (${userRow.Email})`);
+            console.log(`[LOGIN DEBUG] Pass match?`, await bcrypt.compare(password, userRow.Password));
+        } else {
+            console.log(`[LOGIN DEBUG] User NOT Found`);
+        }
 
         if (userRow && (await bcrypt.compare(password, userRow.Password))) {
             res.json({
