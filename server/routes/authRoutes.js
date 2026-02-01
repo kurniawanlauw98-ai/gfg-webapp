@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getMe, getLeaderboard, upgradeToAdmin, getUsers } = require('../controllers/authController');
+const { registerUser, loginUser, getMe, getLeaderboard, upgradeToAdmin, getUsers, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 router.post('/register', registerUser);
@@ -9,6 +9,8 @@ router.get('/me', protect, getMe);
 router.get('/leaderboard', getLeaderboard);
 router.get('/users', protect, adminOnly, getUsers);
 router.put('/role', protect, adminOnly, upgradeToAdmin);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/status', (req, res) => {
     res.json({
         status: 'online',

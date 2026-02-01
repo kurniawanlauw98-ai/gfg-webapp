@@ -81,7 +81,10 @@ const updateUserPoints = async (email, pointsToAdd) => {
         const sheet = document.sheetsByTitle['Users'];
         if (!sheet) return;
         const rows = await sheet.getRows();
-        const row = rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
+        const row = rows.find(r => {
+            const rowEmail = r.Email || r.email || '';
+            return rowEmail.toLowerCase() === email.toLowerCase();
+        });
         if (row) {
             row.Points = (parseInt(row.Points) || 0) + pointsToAdd;
             await row.save();
@@ -104,7 +107,10 @@ const updateUserRole = async (email, newRole) => {
         const sheet = document.sheetsByTitle['Users'];
         if (!sheet) return false;
         const rows = await sheet.getRows();
-        const row = rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
+        const row = rows.find(r => {
+            const rowEmail = r.Email || r.email || '';
+            return rowEmail.toLowerCase() === email.toLowerCase();
+        });
         if (row) {
             row.Role = newRole;
             await row.save();
@@ -113,6 +119,65 @@ const updateUserRole = async (email, newRole) => {
         return false;
     } catch (error) {
         console.error(`Error updating role in Google Sheets:`, error);
+        return false;
+    }
+};
+
+/**
+ * Update user reset token and expiry
+ */
+const updateUserResetToken = async (email, token, expiry) => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        const sheet = document.sheetsByTitle['Users'];
+        if (!sheet) return false;
+
+        // Ensure columns exist
+        await sheet.setHeaderRow(['ID', 'Name', 'Email', 'Password', 'Role', 'Points', 'ReferralCode', 'DOB', 'Hobby', 'FavoriteVerse', 'CreatedAt', 'ResetToken', 'ResetExpires']);
+
+        const rows = await sheet.getRows();
+        const row = rows.find(r => {
+            const rowEmail = r.Email || r.email || '';
+            return rowEmail.toLowerCase() === email.toLowerCase();
+        });
+        if (row) {
+            row.ResetToken = token;
+            row.ResetExpires = expiry;
+            await row.save();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Error updating reset token in Google Sheets:', error);
+        return false;
+    }
+};
+
+/**
+ * Update user password by email
+ */
+const updatePasswordByEmail = async (email, hashedPassword) => {
+    try {
+        await initDoc();
+        const document = getDoc();
+        const sheet = document.sheetsByTitle['Users'];
+        if (!sheet) return false;
+        const rows = await sheet.getRows();
+        const row = rows.find(r => {
+            const rowEmail = r.Email || r.email || '';
+            return rowEmail.toLowerCase() === email.toLowerCase();
+        });
+        if (row) {
+            row.Password = hashedPassword;
+            row.ResetToken = '';
+            row.ResetExpires = '';
+            await row.save();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Error updating password in Google Sheets:', error);
         return false;
     }
 };
@@ -190,4 +255,14 @@ const testConnection = async () => {
     }
 };
 
-module.exports = { syncToSheet, getRows, updateUserPoints, updateUserRole, updateSheetRow, deleteSheetRow, testConnection };
+module.exports = {
+    syncToSheet,
+    getRows,
+    updateUserPoints,
+    updateUserRole,
+    updateUserResetToken,
+    updatePasswordByEmail,
+    updateSheetRow,
+    deleteSheetRow,
+    testConnection
+};

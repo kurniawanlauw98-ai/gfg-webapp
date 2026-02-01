@@ -1,0 +1,2 @@
+// Entry point
+require('./index');

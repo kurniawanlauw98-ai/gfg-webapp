@@ -1,6 +1,7 @@
-const { syncToSheet, getRows } = require('../config/googleSheets');
+const { syncToSheet, getRows, updateUserResetToken, updatePasswordByEmail } = require('../config/googleSheets');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -14,7 +15,10 @@ const generateToken = (id) => {
  */
 const findUserInSheet = async (email) => {
     const rows = await getRows('Users');
-    return rows.find(r => r.Email && r.Email.toLowerCase() === email.toLowerCase());
+    return rows.find(r => {
+        const rowEmail = r.Email || r.email || '';
+        return rowEmail.toLowerCase() === email.toLowerCase();
+    });
 };
 
 // @desc    Register new user
@@ -215,11 +219,100 @@ const upgradeToAdmin = async (req, res) => {
     }
 };
 
+// @desc    Forgot Password - Send OTP
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const userRow = await findUserInSheet(email);
+        if (!userRow) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = Date.now() + 3600000; // 1 hour
+
+        await updateUserResetToken(email, otp, expires.toString());
+
+        // Send Email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: `"GFG Community" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Password Reset Verification Code',
+            text: `Your verification code is: ${otp}. It will expire in 1 hour.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                    <h2 style="color: #2563eb; text-align: center;">GFG Generation for God</h2>
+                    <p>Hello,</p>
+                    <p>You requested to reset your password. Use the verification code below to proceed:</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1e40af; border-radius: 8px; margin: 20px 0;">
+                        ${otp}
+                    </div>
+                    <p>This code will expire in 1 hour. If you didn't request this, please ignore this email.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #666; text-align: center;">© 2026 GFG Platform • Empowered by Faith</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'Verification code sent to email' });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Failed to send verification email' });
+    }
+};
+
+// @desc    Reset Password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+    try {
+        const userRow = await findUserInSheet(email);
+        if (!userRow) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if OTP matches and hasn't expired
+        if (userRow.ResetToken !== otp || Date.now() > parseInt(userRow.ResetExpires)) {
+            return res.status(400).json({ message: 'Invalid or expired verification code' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        const success = await updatePasswordByEmail(email, hashedPassword);
+        if (success) {
+            res.status(200).json({ message: 'Password reset successful!' });
+        } else {
+            res.status(500).json({ message: 'Failed to update password' });
+        }
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Server error during password reset' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
     getLeaderboard,
     upgradeToAdmin,
-    getUsers
+    getUsers,
+    forgotPassword,
+    resetPassword
 };

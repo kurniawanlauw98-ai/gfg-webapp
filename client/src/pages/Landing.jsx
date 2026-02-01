@@ -61,8 +61,49 @@ const Landing = () => {
                 )}
             </div>
 
-            <div className="absolute bottom-8 text-gray-600 text-xs font-mono uppercase tracking-tighter">
-                GFG Platform v2.0 • Empowered by Faith
+            <div className="w-full max-w-5xl mt-24">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-black mb-2">Share with Community</h2>
+                    <p className="text-gray-400">Your voice matters. Inspire others with your journey.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                        { title: 'Prayer Request', icon: '🙏', color: 'bg-pink-500', type: 'prayer', desc: 'Need support? Let us pray for you.' },
+                        { title: 'Testimony', icon: '✨', color: 'bg-blue-500', type: 'testimony', desc: 'Share what God has done in your life.' },
+                        { title: 'Idea', icon: '💡', color: 'bg-yellow-500', type: 'idea', desc: 'Have a suggestion for our community?' }
+                    ].map((item, i) => (
+                        <div key={i} className="bg-[#1e293b] p-8 rounded-3xl border border-gray-800 hover:border-blue-500/50 transition-all group relative overflow-hidden">
+                            <div className={`${item.color} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-lg shadow-${item.color.split('-')[1]}-900/40`}>
+                                {item.icon}
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                            <p className="text-gray-400 text-sm mb-8 leading-relaxed">{item.desc}</p>
+
+                            <Link
+                                to={user ? "/dashboard/submissions" : "/login"}
+                                className="inline-flex items-center gap-2 text-white font-bold group-hover:gap-4 transition-all"
+                            >
+                                Share Now <span className="text-xl">→</span>
+                            </Link>
+
+                            <div className={`absolute -right-4 -bottom-4 text-8xl opacity-5 transform rotate-12`}>
+                                {item.icon}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-16 text-center">
+                    <div className="inline-flex items-center gap-3 px-6 py-3 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 font-bold text-sm">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Earn +15 Faith Points for every share
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-32 mb-16 text-gray-600 text-xs font-mono uppercase tracking-widest text-center">
+                GFG Platform v2.1 • Empowered by Faith
             </div>
         </div>
     )
